@@ -1,0 +1,2 @@
+/vcptest?content-length&predictable-content=1000
+/vcptest?content-length&predictable-content=1200

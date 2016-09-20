@@ -1,0 +1,31 @@
+- name: "Run Benchmarks"
+  hosts: apiperf-consumer
+  tasks:
+    - name: "Copy hey"
+      copy: src="files/hey" dest="/usr/local/bin/hey" mode=ugo+rwx owner=root group=root
+    - name: "Copy wrk"
+      copy: src="files/wrk" dest="/usr/local/bin/wrk" mode=ugo+rwx owner=root group=root
+    - name: "Copy wrk multipath lua script"
+      copy: src="files/multipath.lua" dest="/tmp/multipath.lua" mode=ugo+rwx owner=root group=root
+    - name: "Copy wrk url list"
+      copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root
+    - name: "Run hey reference test (direct dummy-api access)"
+      command: '/usr/local/bin/hey -n 100000 -c 100 http://localhost:8080/reference?content-length&predictable-content=1000'
+      register: testresult
+    - debug: var=testresult.stdout_lines
+    - name: "Run hey varnish cache plus test"
+      command: '/usr/local/bin/hey -n 100000 -c 100 http://localhost:6081/vcptest?content-length&predictable-content=1000'
+      register: testresult
+    - debug: var=testresult.stdout_lines
+    - name: "Run wrk reference test (direct dummy-api access)"
+      command: '/usr/local/bin/wrk -d 15 -c 100 http://localhost:8080/reference?content-length&predictable-content=1000'
+      register: testresult
+    - debug: var=testresult.stdout_lines
+    - name: "Run wrk varnish cache plus test"
+      command: '/usr/local/bin/wrk -d 15 -c 100 http://localhost:6081/vcptest?content-length&predictable-content=1000'
+      register: testresult
+    - debug: var=testresult.stdout_lines
+    - name: "Run wrk varnish cache plus test"
+      command: '/usr/local/bin/wrk -s /tmp/multipath.lua -d 15 -c 100 http://localhost:6081/'
+      register: testresult
+    - debug: var=testresult.stdout_lines

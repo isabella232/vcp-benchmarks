@@ -1,0 +1,16 @@
+- name: "Common setup for all hosts"
+  hosts: all
+  tasks:
+    - name: "Install the EPEL repo"
+      yum: name="{{ item }}" state="installed"
+      with_items:
+        - "epel-release"
+    - name: "Install common tools"
+      yum: name="{{ item }}" state="installed"
+      with_items:
+        - "git"
+        - "ansible"
+        - "wget"
+    - name: "Enable tcp_tw_reuse for testing purposes"
+      command: sysctl net.ipv4.tcp_tw_reuse=1
+

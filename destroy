@@ -1,0 +1,4 @@
+#!/bin/bash
+
+terraform destroy -var-file="terraform.tfvars.mine" "aws-ec2/"
+rm -f hosts/*.host

@@ -3,5 +3,6 @@ hosts/*.host
 hosts/*.vhahost
 hosts/*.cname
 files/urls.txt
+files/targets.txt
 terraform.tfstate*
 terraform.tfvars.mine

@@ -23,13 +23,12 @@ function load_url_paths_from_file(file)
   return lines
 end
 
--- Load URL paths from file
 paths = load_url_paths_from_file("/tmp/urls.txt")
 
-print("multipaths: Found " .. #paths .. " paths")
+print("Found " .. #paths .. " urls in file")
 
 -- Initialize the paths array iterator
-counter = 0
+counter = 1
 
 request = function()
   -- Get the next paths array element
@@ -39,7 +38,7 @@ request = function()
 
   -- If the counter is longer than the paths array length then reset it
   if counter > #paths then
-    counter = 0
+    counter = 1
   end
 
   -- Return the request object with the current URL path

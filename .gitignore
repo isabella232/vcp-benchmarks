@@ -1,0 +1,7 @@
+host_vars/*.*.*.*
+hosts/*.host
+hosts/*.vhahost
+hosts/*.cname
+files/urls.txt
+terraform.tfstate*
+terraform.tfvars.mine

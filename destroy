@@ -2,3 +2,6 @@
 
 terraform destroy -var-file="terraform.tfvars.mine" "aws-ec2/"
 rm -f hosts/*.host
+rm -f hosts/*.cname
+rm -f hosts/*.vhahost
+rm -f host_vars/*.*.*.*

@@ -1,0 +1,19 @@
+- name: "Setup Varnish High Availability"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Configure vha-agent"
+      shell: vha-agent -N /etc/vha-agent/nodes.conf -g > /etc/varnish/vha.vcl
+      notify:
+        - "Restart vha-agent"
+    - name: "Force restart of varnish"
+      service: name="varnish" state="restarted" enabled="yes"
+    - name: "Copy vha-agent.params"
+      copy: src="files/vha-agent.params"
+            dest="/etc/varnish/vha-agent.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart vha-agent"
+
+  handlers:
+    - name: "Restart vha-agent"
+      service: name="vha-agent" state="restarted"

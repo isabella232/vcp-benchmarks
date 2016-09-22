@@ -1,5 +1,5 @@
 - name: "Setup Dummy-API"
-  hosts: all
+  hosts: vcpbench-varnish*
   tasks:
     - name: "Copy dummy-api binary"
       copy: src="files/dummy-api"

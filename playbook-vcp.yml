@@ -1,0 +1,23 @@
+- name: "Configure Varnish Cache Plus"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Copy default.vcl"
+      copy: src="files/default.vcl"
+            dest="/etc/varnish/default.vcl"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+
+    - name: "Copy varnish.params"
+      copy: src="files/varnish.params"
+            dest="/etc/varnish/varnish.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+
+    - name: "Ensure varnish is running"
+      service: name="varnish" state="running" enabled="yes"
+
+  handlers:
+    - name: "Restart varnish"
+      service: name="varnish" state="restarted"

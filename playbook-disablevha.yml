@@ -1,0 +1,11 @@
+- name: "Disable Varnish High Availability"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Copy default.vcl"
+      copy: src="files/default-novha.vcl"
+            dest="/etc/varnish/default.vcl"
+            mode=444 owner=root group=root
+    - name: "Stop vha-agent"
+      service: name="vha-agent" state="stopped" enabled="no"
+    - name: "Force restart of varnish"
+      service: name="varnish" state="restarted" enabled="yes"

@@ -1,0 +1,9 @@
+# Edit DAEMON_OPTS below and set ENABLE=1 to finalize configuration.
+ENABLE=1
+
+# Create a file /etc/vha-agent/nodes.conf (or change the line below) and fill
+# it with your nodes, one per line with the format "name = addr"
+# You also need to change "node" to the name of this machine.
+# please consult the man page for more info
+
+DAEMON_OPTS="-N /etc/vha-agent/nodes.conf -s /var/lib/vha-agent/vha-status"

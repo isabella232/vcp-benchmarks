@@ -11,6 +11,15 @@
         - "git"
         - "ansible"
         - "wget"
+        - "vim"
     - name: "Enable tcp_tw_reuse for testing purposes"
       command: sysctl net.ipv4.tcp_tw_reuse=1
-
+- name: "Setup wrk benchmarks"
+  hosts: vcpbench-consumer
+  tasks:
+    - name: "Copy wrk"
+      copy: src="files/wrk" dest="/usr/local/bin/wrk" mode=ugo+rwx owner=root group=root
+    - name: "Copy wrk multipath lua script"
+      copy: src="files/multipath.lua" dest="/tmp/multipath.lua" mode=ugo+rwx owner=root group=root
+    - name: "Copy wrk url list"
+      copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root

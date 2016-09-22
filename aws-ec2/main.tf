@@ -108,23 +108,45 @@ resource "aws_instance" "vcpbench-varnish" {
         name = "${lookup(var.instance_names, "varnish")}"
     }
     provisioner "local-exec" {
-        command = "echo ${self.private_ip} ${lookup(var.instance_names, "varnish")}-${count.index} > hosts/${lookup(var.instance_names, "varnish")}-${count.index}.host"
+        command = "echo ${self.private_ip} ${lookup(var.instance_names, "varnish")}${count.index} > hosts/${lookup(var.instance_names, "varnish")}${count.index}.host"
     }
     provisioner "local-exec" {
         command = "echo ansible_ssh_user: ${lookup(var.user_name, "varnish")} > host_vars/${self.public_ip}"
+    }
+    provisioner "local-exec" {
+        command = "echo ${lookup(var.instance_names, "varnish")}${count.index} = ${self.private_ip}:6081 > hosts/${lookup(var.instance_names, "varnish")}${count.index}.vhahost"
+    }
+    provisioner "remote-exec" {
+        connection {
+            host = "${self.public_ip}"
+            user = "${lookup(var.user_name, "varnish")}"
+        }
+        inline = [
+            "echo ${lookup(var.instance_names, "varnish")}${count.index} > /tmp/hostname",
+        ]
     }
 }
 
 # Create a new load balancer
 resource "aws_elb" "vcpbench-elb" {
-    name        = "vcpbench-elb"
-    subnets     = ["${aws_subnet.vcpbench.id}"]
+    name            = "vcpbench-elb"
+    subnets         = ["${aws_subnet.vcpbench.id}"]
+    security_groups = ["${aws_security_group.vcpbench.id}"]
     
     access_logs {
         bucket  = "foo"
         enabled = false
     }
-    
+
+# Dummy-API Listener
+    listener {
+        instance_port       = 8080
+        instance_protocol   = "http"
+        lb_port             = 8080
+        lb_protocol         = "http"
+    }
+
+# VCP Listener
     listener {
         instance_port       = 6081
         instance_protocol   = "http"
@@ -159,12 +181,20 @@ resource "aws_elb" "vcpbench-elb" {
     tags {
         Name = "VCP Benchmark ELB"
     }
+
+    provisioner "local-exec" {
+        command = "echo ${self.dns_name} > hosts/loadbalancer.cname"
+    }
 }
 
 resource "null_resource" "hostsfile" {
     triggers {
-        aws_instance_consumer  = "${aws_instance.vcpbench-consumer.private_ip}"
-        aws_instance_varnish   = "${aws_instance.vcpbench-varnish.*.private_ip}"
+        aws_instance_consumer   = "${aws_instance.vcpbench-consumer.private_ip}"
+        aws_instance_varnish-0  = "${aws_instance.vcpbench-varnish.0.private_ip}"
+        aws_instance_varnish-1  = "${aws_instance.vcpbench-varnish.1.private_ip}"
+        aws_instance_varnish-2  = "${aws_instance.vcpbench-varnish.2.private_ip}"
+        aws_instance_varnish-3  = "${aws_instance.vcpbench-varnish.3.private_ip}"
+        aws_elasticloadbalancer = "${aws_elb.vcpbench-elb.dns_name}"
     }
     provisioner "file" {
         connection {
@@ -198,6 +228,8 @@ resource "null_resource" "hostsfile" {
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+            "sudo sh -c 'cat /tmp/hosts/*.vhahost > /etc/vha-agent/nodes.conf'",
+            "sudo sh -c 'hostname --file /tmp/hostname'",
         ]
     }
     provisioner "file" {
@@ -215,6 +247,8 @@ resource "null_resource" "hostsfile" {
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+            "sudo sh -c 'cat /tmp/hosts/*.vhahost > /etc/vha-agent/nodes.conf'",
+            "sudo sh -c 'hostname --file /tmp/hostname'",
         ]
     }
     provisioner "file" {
@@ -232,6 +266,8 @@ resource "null_resource" "hostsfile" {
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+            "sudo sh -c 'cat /tmp/hosts/*.vhahost > /etc/vha-agent/nodes.conf'",
+            "sudo sh -c 'hostname --file /tmp/hostname'",
         ]
     }
     provisioner "file" {
@@ -249,6 +285,8 @@ resource "null_resource" "hostsfile" {
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+            "sudo sh -c 'cat /tmp/hosts/*.vhahost > /etc/vha-agent/nodes.conf'",
+            "sudo sh -c 'hostname --file /tmp/hostname'",
         ]
     }
 }

@@ -1,0 +1,13 @@
+- name: "Run Hey based Benchmarks"
+  hosts: vcpbench-consumer
+  tasks:
+    - name: "Copy hey"
+      copy: src="files/hey" dest="/usr/local/bin/hey" mode=ugo+rwx owner=root group=root
+    - name: "Run hey reference test (direct dummy-api access)"
+      shell: /usr/local/bin/hey -n 100000 -c 100 "http://`cat /tmp/hosts/loadbalancer.cname`:8080/reference?content-length&predictable-content=1000"
+      register: testresult
+    - debug: var=testresult.stdout_lines
+    - name: "Run hey varnish cache plus test"
+      shell: /usr/local/bin/hey -n 100000 -c 100 "http://`cat /tmp/hosts/loadbalancer.cname`/vcptest?content-length&predictable-content=1000"
+      register: testresult
+    - debug: var=testresult.stdout_lines

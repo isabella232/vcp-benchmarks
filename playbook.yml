@@ -14,6 +14,8 @@
         - "vim"
     - name: "Enable tcp_tw_reuse for testing purposes"
       command: sysctl net.ipv4.tcp_tw_reuse=1
+    - name: "Increase open files max"
+      command: sysctl fs.file-max=3000000
 - name: "Setup wrk benchmarks"
   hosts: vcpbench-consumer
   tasks:
@@ -23,3 +25,10 @@
       copy: src="files/multipath.lua" dest="/tmp/multipath.lua" mode=ugo+rwx owner=root group=root
     - name: "Copy wrk url list"
       copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root
+- name: "Setup vegeta benchmarks"
+  hosts: vcpbench-consumer
+  tasks:
+    - name: "Copy vegeta"
+      copy: src="files/vegeta" dest="/usr/local/bin/vegeta" mode=ugo+rwx owner=root group=root
+    - name: "Copy vegeta target list"
+      copy: src="files/targets.txt" dest="/tmp/targets.txt" mode=ugo+rwx owner=root group=root

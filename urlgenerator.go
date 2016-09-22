@@ -8,7 +8,7 @@ import (
 
 const (
 	rndseed = 4242
-	numurls = 100000
+	numurls = 10000
 	hitpct  = 90
 	misspct = 10
 	minsize = 1000
@@ -17,7 +17,7 @@ const (
 )
 
 func main() {
-	hiturl := string("/hit/?content-length&max-age=6000&header-delay=100predictable-content=")
+	hiturl := string("/hit/?content-length&max-age=60&header-delay=100predictable-content=")
 	missurl := string("/miss/?content-length&max-age=0&header-delay=100predictable-content=")
 
 	urls := make([]string, numurls)

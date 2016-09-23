@@ -167,9 +167,9 @@ resource "aws_elb" "vcpbench-elb" {
     health_check {
         healthy_threshold = 2
         unhealthy_threshold = 3
-        timeout = 5
-        target = "HTTP:6081/"
-        interval = 300
+        timeout = 2
+        target = "TCP:6081"
+        interval = 5
     }
 
     instances = ["${aws_instance.vcpbench-varnish.*.id}"]

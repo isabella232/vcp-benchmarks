@@ -1,19 +1,22 @@
 - name: "Common setup for all hosts"
   hosts: all
   tasks:
-    - name: "Install the EPEL repo"
-      yum: name="{{ item }}" state="installed"
-      with_items:
-        - "epel-release"
+#    - name: "Install the EPEL repo"
+#      yum: name="{{ item }}" state="installed"
+#      with_items:
+#        - "epel-release"
     - name: "Install common tools"
       yum: name="{{ item }}" state="installed"
       with_items:
-        - "git"
+#        - "git"
         - "ansible"
-        - "wget"
-        - "vim"
+#        - "wget"
+#        - "vim"
     - name: "Enable tcp_tw_reuse for testing purposes"
       command: sysctl net.ipv4.tcp_tw_reuse=1
+- name: "Consumer tuning"
+  hosts: all
+  tasks:
     - name: "Increase open files max"
       command: sysctl fs.file-max=3000000
 - name: "Setup wrk benchmarks"
@@ -32,3 +35,64 @@
       copy: src="files/vegeta" dest="/usr/local/bin/vegeta" mode=ugo+rwx owner=root group=root
     - name: "Copy vegeta target list"
       copy: src="files/targets.txt" dest="/tmp/targets.txt" mode=ugo+rwx owner=root group=root
+- name: "Setup Dummy-API"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Copy dummy-api binary"
+      copy: src="files/dummy-api"
+            dest="/usr/local/bin/dummy-api"
+            mode=555 owner=root group=root
+
+    - name: "Ensure the dummy-api user is present"
+      user: name="dummy-api" comment="Dummy API system user"
+            system="yes" state="present"
+
+    - name: "Ensure dummy-api service script is present"
+      copy: src="files/dummy-api.service"
+            dest="/etc/systemd/system/dummy-api.service"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart dummy-api"
+    - name: "Ensure dummy-api is running"
+      service: name="dummy-api" state="running" enabled="yes"
+  handlers:
+    - name: "Restart dummy-api"
+      service: name="dummy-api" state="restarted"
+- name: "Setup Varnish High Availability"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Configure vha-agent"
+      shell: vha-agent -N /etc/vha-agent/nodes.conf -g > /etc/varnish/vha.vcl
+      notify:
+        - "Restart vha-agent"
+    - name: "Force restart of varnish"
+      service: name="varnish" state="restarted" enabled="yes"
+    - name: "Copy vha-agent.params"
+      copy: src="files/vha-agent.params"
+            dest="/etc/varnish/vha-agent.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart vha-agent"
+  handlers:
+    - name: "Restart vha-agent"
+      service: name="vha-agent" state="restarted"
+- name: "Configure Varnish Cache Plus"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Copy default.vcl"
+      copy: src="files/default.vcl"
+            dest="/etc/varnish/default.vcl"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Copy varnish.params"
+      copy: src="files/varnish.params"
+            dest="/etc/varnish/varnish.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Ensure varnish is running"
+      service: name="varnish" state="running" enabled="yes"
+  handlers:
+    - name: "Restart varnish"
+      service: name="varnish" state="restarted"

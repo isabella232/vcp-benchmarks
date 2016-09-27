@@ -1,0 +1,38 @@
+- name: "Setup Varnish High Availability"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Configure vha-agent"
+      shell: vha-agent -N /etc/vha-agent/nodes.conf -g > /etc/varnish/vha.vcl
+      notify:
+        - "Restart vha-agent"
+    - name: "Force restart of varnish"
+      service: name="varnish" state="restarted" enabled="yes"
+    - name: "Copy vha-agent.params"
+      copy: src="files/vha-agent.params"
+            dest="/etc/varnish/vha-agent.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart vha-agent"
+  handlers:
+    - name: "Restart vha-agent"
+      service: name="vha-agent" state="restarted"
+- name: "Configure Varnish Cache Plus"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Copy default.vcl"
+      copy: src="files/default.vcl"
+            dest="/etc/varnish/default.vcl"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Copy varnish.params"
+      copy: src="files/varnish.params"
+            dest="/etc/varnish/varnish.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Ensure varnish is running"
+      service: name="varnish" state="running" enabled="yes"
+  handlers:
+    - name: "Restart varnish"
+      service: name="varnish" state="restarted"

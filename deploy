@@ -2,3 +2,6 @@
 
 terraform apply -var-file=terraform.tfvars.mine aws-ec2/
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook.yml
+if [ -x /usr/local/bin/terminal-notifier ] ; then
+    /usr/local/bin/terminal-notifier -message 'Deploy done' -sound 'default'
+fi

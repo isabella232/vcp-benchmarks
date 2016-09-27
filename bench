@@ -8,3 +8,6 @@ echo "Disable VHA."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-disablevha.yml
 echo "Running VHA disabled benchmark."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-wrkbench.yml
+if [ -x /usr/local/bin/terminal-notifier ] ; then
+    /usr/local/bin/terminal-notifier -message 'Benchmark done' -sound 'default'
+fi

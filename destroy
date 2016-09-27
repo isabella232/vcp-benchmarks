@@ -5,3 +5,6 @@ rm -f hosts/*.host
 rm -f hosts/*.cname
 rm -f hosts/*.vhahost
 rm -f host_vars/*.*.*.*
+if [ -x /usr/local/bin/terminal-notifier ] ; then
+    /usr/local/bin/terminal-notifier -message 'Destroy done' -sound 'default'
+fi

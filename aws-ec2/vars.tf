@@ -37,8 +37,8 @@ variable "instance_names" {
 variable "instance_types" {
     description = "Instance types to use"
     default = {
-        "consumer"  = "m4.xlarge"
-        "varnish"   = "m4.xlarge"
+        "consumer"  = "m4.large"
+        "varnish"   = "m4.large"
     }
 }
 

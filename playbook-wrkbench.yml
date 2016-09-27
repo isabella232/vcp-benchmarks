@@ -15,7 +15,7 @@
     - name: "Wait for replication"
       pause: seconds=2
     - name: "Run wrk reference test (one hit url only for 10 seconds)"
-      shell: /usr/local/bin/wrk -t 4 -d 10 -c 400 "http://`cat /tmp/hosts/loadbalancer.cname`/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
+      shell: /usr/local/bin/wrk -t 1 -d 10 -c 400 "http://`cat /tmp/hosts/loadbalancer.cname`/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
       register: testresult
     - debug: var=testresult.stdout_lines
 - name: "Get stats"
@@ -31,7 +31,7 @@
   hosts: vcpbench-consumer
   tasks:
     - name: "Run wrk varnish cache plus test (4 minutes)"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 4 -d 240 -c 400 "http://`cat /tmp/hosts/loadbalancer.cname`/"
+      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 240 -c 400 "http://`cat /tmp/hosts/loadbalancer.cname`/"
       register: testresult
     - debug: var=testresult.stdout_lines
 - name: "Get backend reqs"

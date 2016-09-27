@@ -17,8 +17,8 @@ const (
 )
 
 func main() {
-	hiturl := string("/hit/?content-length&max-age=60&header-delay=100predictable-content=")
-	missurl := string("/miss/?content-length&max-age=0&header-delay=100predictable-content=")
+	hiturl := string("/hit/?content-length&max-age=60&header-delay=1000predictable-content=")
+	missurl := string("/miss/?content-length&max-age=0&header-delay=1000predictable-content=")
 
 	urls := make([]string, numurls)
 	size := int64(minsize * factor)

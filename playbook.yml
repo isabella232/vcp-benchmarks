@@ -42,11 +42,11 @@
       copy: src="files/dummy-api"
             dest="/usr/local/bin/dummy-api"
             mode=555 owner=root group=root
-
+      notify:
+        - "Restart dummy-api"
     - name: "Ensure the dummy-api user is present"
       user: name="dummy-api" comment="Dummy API system user"
             system="yes" state="present"
-
     - name: "Ensure dummy-api service script is present"
       copy: src="files/dummy-api.service"
             dest="/etc/systemd/system/dummy-api.service"

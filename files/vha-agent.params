@@ -6,4 +6,4 @@ ENABLE=1
 # You also need to change "node" to the name of this machine.
 # please consult the man page for more info
 
-DAEMON_OPTS="-N /etc/vha-agent/nodes.conf -s /var/lib/vha-agent/vha-status"
+DAEMON_OPTS="-N /etc/vha-agent/nodes.conf -p nthreads=40 -s /var/lib/vha-agent/vha-status"

@@ -1,0 +1,35 @@
+- name: "Prepare varnishservers"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Force restart of varnish"
+      service: name="varnish" state="restarted" enabled="yes"
+    - name: "Reset dummy-api request counter"
+      shell: curl -I http://localhost:8080/x-resetdummyapistatistics | grep "X-Request-Counter"
+      register: backendreqs
+    - debug: var=backendreqs.stdout_lines
+    - name: "Dump backend requests pre-test"
+      command: /bin/varnishstat -1 -f MAIN.backend_req
+      register: varnishstatbackendreqs
+    - debug: var=varnishstatbackendreqs.stdout_lines
+- name: "Run Benchmarks"
+  hosts: vcpbench-consumer
+  tasks:
+    - name: "Warm cache"
+      shell: curl -I http://`cat /tmp/hosts/loadbalancer.cname`/testreqs?max-age=600
+      register: cachewarm
+    - debug: var=cachewarm.stdout_lines
+    - name: "Run wrk reference test (one hit url only for 30 seconds)"
+      shell: /usr/local/bin/wrk -t 4 -d 30 -c 400 "http://`cat /tmp/hosts/loadbalancer.cname`/testreqs?max-age=600"
+      register: testresult
+    - debug: var=testresult.stdout_lines
+- name: "Get backend reqs"
+  hosts: vcpbench-varnish*
+  tasks:
+    - name: "Dump backend requests post-test"
+      shell: curl -I http://localhost:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
+      register: backendreqs
+    - debug: var=backendreqs.stdout_lines
+    - name: "Dump backend requests post-test"
+      command: /bin/varnishstat -1 -f MAIN.backend_req
+      register: varnishstatbackendreqs
+    - debug: var=varnishstatbackendreqs.stdout_lines

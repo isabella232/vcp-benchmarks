@@ -14,11 +14,8 @@
   tasks:
     - name: "Force restart of varnish"
       service: name="varnish" state="restarted" enabled="yes"
-- name: "Reset stats"
-  hosts: vcpbench-backend
-  tasks:
     - name: "Reset backend requests pre-benchmark"
-      shell: curl -I http://localhost:8080/x-resetdummyapistatistics
+      shell: curl -I http://backend:8080/x-resetdummyapistatistics
       register: testresult
 - name: "Run Reference Test"
   hosts: vcpbench-consumer*
@@ -30,43 +27,43 @@
     - name: "Wait for replication"
       pause: seconds=2
     - name: "Run wrk reference test (one hit url only for 10 seconds)"
-      shell: /usr/local/bin/wrk -t 4 -d 10 -c 400 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
+      shell: /usr/local/bin/wrk -t 1 -d 10 -c 400 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Dump reference testresult to local file"
       become: false
       local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/reference_test_{{ vha_status }}.log
 - name: "Get stats"
-  hosts: vcpbench-backend
+  hosts: vcpbench-varnish*
   tasks:
     - name: "Get backend requests post-reference"
-      shell: curl -I http://localhost:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
+      shell: curl -I http://backend:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
       register: backendreqs
     - debug: var=backendreqs.stdout_lines
     - name: "Reset dummy-api stats"
-      shell: curl -I http://localhost:8080/x-resetdummyapistatistics
+      shell: curl -I http://backend:8080/x-resetdummyapistatistics
 - name: "Run Benchmark Pass 1"
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 4 -d 10 -c 400 "http://loadbalancer/"
+      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Dump reference testresult to local file"
       become: false
       local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test1_{{ vha_status }}.log
 - name: "Get backend reqs Pass 1"
-  hosts: vcpbench-backend
+  hosts: vcpbench-varnish*
   tasks:
     - name: "Get backend requests post-benchmark"
-      shell: curl -I http://localhost:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
+      shell: curl -I http://backend:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
       register: backendreqs
     - debug: var=backendreqs.stdout_lines
     - name: "Dump backend requests to local file"
       become: false
       local_action: copy content="{{ backendreqs.stdout }}" dest=./results/{{ benchmark_id }}/backend_requests1_{{ inventory_hostname }}_{{ vha_status }}.log
     - name: "Reset dummy-api stats"
-      shell: curl -I http://localhost:8080/x-resetdummyapistatistics
+      shell: curl -I http://backend:8080/x-resetdummyapistatistics
 - name: "Post process benchmark output Pass 1"
   connection: local
   hosts: 127.0.0.1
@@ -83,17 +80,17 @@
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 4 -d 10 -c 400 "http://loadbalancer/"
+      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Dump reference testresult to local file"
       become: false
       local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test2_{{ vha_status }}.log
 - name: "Get backend reqs Pass 2"
-  hosts: vcpbench-backend
+  hosts: vcpbench-varnish*
   tasks:
     - name: "Get backend requests post-benchmark"
-      shell: curl -I http://localhost:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
+      shell: curl -I http://backend:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
       register: backendreqs
     - debug: var=backendreqs.stdout_lines
     - name: "Dump backend requests to local file"
@@ -115,17 +112,17 @@
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 4 -d 10 -c 400 "http://loadbalancer/"
+      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Dump reference testresult to local file"
       become: false
       local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test3_{{ vha_status }}.log
 - name: "Get backend reqs Pass 3"
-  hosts: vcpbench-backend
+  hosts: vcpbench-varnish*
   tasks:
     - name: "Get backend requests post-benchmark"
-      shell: curl -I http://localhost:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
+      shell: curl -I http://backend:8080/x-dumpdummyapistatistics | grep "X-Request-Counter"
       register: backendreqs
     - debug: var=backendreqs.stdout_lines
     - name: "Dump backend requests to local file"

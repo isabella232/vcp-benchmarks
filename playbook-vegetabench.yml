@@ -4,10 +4,10 @@
     - name: "Force restart of varnish"
       service: name="varnish" state="restarted" enabled="yes"
 - name: "Run Benchmarks"
-  hosts: vcpbench-consumer
+  hosts: vcpbench-consumer*
   tasks:
     - name: "Run vegeta reference test (one hit url only for 10 seconds)"
-      shell: echo "GET http://`cat /tmp/hosts/loadbalancer.cname`/reference/?content-length&max-age=6000&header-delay=100predictable-content=202502" | /usr/local/bin/vegeta attack -duration=10s -rate 100 | tee results.bin | vegeta report 
+      shell: echo "GET http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=202502" | /usr/local/bin/vegeta attack -duration=10s -rate 100 | tee results.bin | vegeta report 
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Run vegeta varnish cache plus test (4 minutes)"

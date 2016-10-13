@@ -16,8 +16,10 @@ variable "aws_ec2_region" {
 variable "aws_ec2_ami" {
     description = "The EC2 AMI to use"
     default = {
-        "consumer"  = "ami-74740a07"
-        "varnish"   = "ami-74740a07"
+        "consumer"      = "ami-74740a07"
+        "backend"       = "ami-74740a07"
+        "varnish"       = "ami-74740a07"
+        "loadbalancer"  = "ami-74740a07"
     }
 }
 
@@ -28,8 +30,10 @@ variable "sshkey" {
 variable "instance_names" {
     description = "Base names to use for instances"
     default = {
-        "consumer"  = "consumer"
-        "varnish"   = "varnish"
+        "consumer"      = "consumer"
+        "backend"       = "backend"
+        "varnish"       = "varnish"
+        "loadbalancer"  = "loadbalancer"
     }
 }
 
@@ -37,14 +41,18 @@ variable "instance_names" {
 variable "instance_types" {
     description = "Instance types to use"
     default = {
-        "consumer"  = "m4.large"
-        "varnish"   = "m4.large"
+        "consumer"      = "m3.medium"
+        "backend"       = "m3.medium"
+        "varnish"       = "m3.medium"
+        "loadbalancer"  = "m3.medium"
     }
 }
 
 variable "user_name" {
     default = {
-        "consumer" = "ec2-user"
-        "varnish"  = "ec2-user"
+        "consumer"      = "ec2-user"
+        "backend"       = "ec2-user"
+        "varnish"       = "ec2-user"
+        "loadbalancer"  = "ec2-user"
     }
 }

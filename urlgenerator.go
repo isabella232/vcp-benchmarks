@@ -8,18 +8,20 @@ import (
 
 const (
 	factor            = 1000
-	default_maxage    = 600
-	default_hitpct    = 90
+	default_hitage    = 6000
+	default_missage   = 6000
+	default_hitpct    = 50
 	default_rndseed   = 4242
-	default_minsize   = 1000
-	default_maxsize   = 200000
+	default_minsize   = 10000
+	default_maxsize   = 20000
 	default_hitdelay  = 100
-	default_missdelay = 100
+	default_missdelay = 200
 	default_numurls   = 10000
 )
 
 func main() {
-	var maxage int
+	var hitage int
+	var missage int
 	var hitpct int
 	var misspct = 100 - hitpct
 	var rndseed int64
@@ -30,7 +32,8 @@ func main() {
 	var missdelay int
 	var urlprefix string
 
-	flag.IntVar(&maxage, "max-age", default_maxage, "Max-age for cacheable urls.")
+	flag.IntVar(&hitage, "hit-age", default_hitage, "Max-Age for hit urls.")
+	flag.IntVar(&missage, "miss-age", default_missage, "Max-age for miss urls.")
 	flag.IntVar(&hitpct, "hit-percent", default_hitpct, "Percentage of urls that are hits.")
 	flag.IntVar(&minsize, "min-size", default_minsize, "Minimum request size.")
 	flag.IntVar(&maxsize, "max-size", default_maxsize, "Maximum request size.")
@@ -42,8 +45,8 @@ func main() {
 
 	flag.Parse()
 
-	hiturl := fmt.Sprintf("/hit/?content-length&max-age=%d&header-delay=%dpredictable-content=", maxage, hitdelay)
-	missurl := fmt.Sprintf("/miss/?content-length&max-age=%d&header-delay=%dpredictable-content=", 0, missdelay)
+	hiturl := fmt.Sprintf("/hit/?content-length&max-age=%d&header-delay=%dpredictable-content=", hitage, hitdelay)
+	missurl := fmt.Sprintf("/miss/?content-length&max-age=%d&header-delay=%dpredictable-content=", missage, missdelay)
 
 	urls := make([]string, numurls)
 	size := int64(minsize * factor)

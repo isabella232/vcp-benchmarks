@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Generate Benchmark timestamp ID"
+BenchmarkID=$(date "+%Y-%m-%d-%H.%M.%S")
+echo "Enable VHA."
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-enablevha.yml 
+echo "Running VHA enabled benchmark."
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-siegebench.yml --extra-vars "benchmark_id=${BenchmarkID} vha_status=vhaenabled"
+echo "Disable VHA."
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-disablevha.yml
+echo "Running VHA disabled benchmark."
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-siegebench.yml --extra-vars "benchmark_id=${BenchmarkID} vha_status=vhadisabled"
+./storeindocs -benchmark-type siege -sheet-id 1fiFTGjRfJSlLCDVybqi2xgDsbfrFhOvLqjNBJ33LdwA -benchmark-dir results/${BenchmarkID}
+
+if [ -x /usr/local/bin/terminal-notifier ] ; then
+    /usr/local/bin/terminal-notifier -message 'Benchmark done' -sound 'default'
+fi

@@ -95,7 +95,45 @@ resource "aws_instance" "vcpbench-consumer" {
     }
 }
 
-# Create the benchmark consumer instances
+# Create the benchmark backend instance
+resource "aws_instance" "vcpbench-backend" {
+    ami                     = "${lookup(var.aws_ec2_ami, "backend")}"
+    instance_type           = "${lookup(var.instance_types, "backend")}"
+    key_name                = "vcpbench-sshkey"
+    user_data               = "${file("aws-ec2/userdata.sh")}"
+    subnet_id               = "${aws_subnet.vcpbench.id}"
+    vpc_security_group_ids  = ["${aws_security_group.vcpbench.id}"]
+    tags {
+        name    = "${lookup(var.instance_names, "backend")}"
+    }
+    provisioner "local-exec" {
+        command = "echo ${self.private_ip} ${lookup(var.instance_names, "backend")} > hosts/${lookup(var.instance_names, "backend")}.host"
+    }
+    provisioner "local-exec" {
+        command = "echo ansible_ssh_user: ${lookup(var.user_name, "backend")} > host_vars/${self.public_ip}"
+    }
+}
+
+# Create the loadbalancer instance
+resource "aws_instance" "vcpbench-loadbalancer" {
+    ami                     = "${lookup(var.aws_ec2_ami, "loadbalancer")}"
+    instance_type           = "${lookup(var.instance_types, "loadbalancer")}"
+    key_name                = "vcpbench-sshkey"
+    user_data               = "${file("aws-ec2/userdata.sh")}"
+    subnet_id               = "${aws_subnet.vcpbench.id}"
+    vpc_security_group_ids  = ["${aws_security_group.vcpbench.id}"]
+    tags {
+        name    = "${lookup(var.instance_names, "loadbalancer")}"
+    }
+    provisioner "local-exec" {
+        command = "echo ${self.private_ip} ${lookup(var.instance_names, "loadbalancer")} > hosts/${lookup(var.instance_names, "loadbalancer")}.host"
+    }
+    provisioner "local-exec" {
+        command = "echo ansible_ssh_user: ${lookup(var.user_name, "loadbalancer")} > host_vars/${self.public_ip}"
+    }
+}
+
+# Create the varnish instances
 resource "aws_instance" "vcpbench-varnish" {
     ami                     = "${lookup(var.aws_ec2_ami, "varnish")}"
     count                   = 4
@@ -127,74 +165,15 @@ resource "aws_instance" "vcpbench-varnish" {
     }
 }
 
-# Create a new load balancer
-resource "aws_elb" "vcpbench-elb" {
-    name            = "vcpbench-elb"
-    subnets         = ["${aws_subnet.vcpbench.id}"]
-    security_groups = ["${aws_security_group.vcpbench.id}"]
-    
-    access_logs {
-        bucket  = "foo"
-        enabled = false
-    }
-
-# Dummy-API Listener
-    listener {
-        instance_port       = 8080
-        instance_protocol   = "http"
-        lb_port             = 8080
-        lb_protocol         = "http"
-    }
-
-# VCP Listener
-    listener {
-        instance_port       = 6081
-        instance_protocol   = "http"
-        lb_port             = 80
-        lb_protocol         = "http"
-    }
-
-# TLS Listener 
-#
-#  listener {
-#    instance_port = 8000
-#    instance_protocol = "http"
-#    lb_port = 443
-#    lb_protocol = "https"
-#    ssl_certificate_id = "arn:aws:iam::123456789012:server-certificate/certName"
-#  }
-
-    health_check {
-        healthy_threshold = 2
-        unhealthy_threshold = 3
-        timeout = 2
-        target = "TCP:6081"
-        interval = 5
-    }
-
-    instances = ["${aws_instance.vcpbench-varnish.*.id}"]
-    cross_zone_load_balancing = false
-    idle_timeout = 400
-    connection_draining = true
-    connection_draining_timeout = 400
-
-    tags {
-        Name = "VCP Benchmark ELB"
-    }
-
-    provisioner "local-exec" {
-        command = "echo ${self.dns_name} > hosts/loadbalancer.cname"
-    }
-}
-
 resource "null_resource" "hostsfile" {
     triggers {
-        aws_instance_consumer   = "${aws_instance.vcpbench-consumer.private_ip}"
-        aws_instance_varnish-0  = "${aws_instance.vcpbench-varnish.0.private_ip}"
-        aws_instance_varnish-1  = "${aws_instance.vcpbench-varnish.1.private_ip}"
-        aws_instance_varnish-2  = "${aws_instance.vcpbench-varnish.2.private_ip}"
-        aws_instance_varnish-3  = "${aws_instance.vcpbench-varnish.3.private_ip}"
-        aws_elasticloadbalancer = "${aws_elb.vcpbench-elb.dns_name}"
+        aws_instance_consumer       = "${aws_instance.vcpbench-consumer.private_ip}"
+        aws_instance_backend        = "${aws_instance.vcpbench-backend.private_ip}"
+        aws_instance_loadbalancer   = "${aws_instance.vcpbench-loadbalancer.private_ip}"
+        aws_instance_varnish-0      = "${aws_instance.vcpbench-varnish.0.private_ip}"
+        aws_instance_varnish-1      = "${aws_instance.vcpbench-varnish.1.private_ip}"
+        aws_instance_varnish-2      = "${aws_instance.vcpbench-varnish.2.private_ip}"
+        aws_instance_varnish-3      = "${aws_instance.vcpbench-varnish.3.private_ip}"
     }
     provisioner "file" {
         connection {
@@ -208,6 +187,40 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-consumer.public_ip}"
             user = "${lookup(var.user_name, "consumer")}"
+        }
+        inline = [
+            "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+        ]
+    }
+    provisioner "file" {
+        connection {
+            host = "${aws_instance.vcpbench-backend.public_ip}"
+            user = "${lookup(var.user_name, "backend")}"
+        }
+        source = "hosts"
+        destination = "/tmp"
+    }
+    provisioner "remote-exec" {
+        connection {
+            host = "${aws_instance.vcpbench-backend.public_ip}"
+            user = "${lookup(var.user_name, "backend")}"
+        }
+        inline = [
+            "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
+        ]
+    }
+    provisioner "file" {
+        connection {
+            host = "${aws_instance.vcpbench-loadbalancer.public_ip}"
+            user = "${lookup(var.user_name, "loadbalancer")}"
+        }
+        source = "hosts"
+        destination = "/tmp"
+    }
+    provisioner "remote-exec" {
+        connection {
+            host = "${aws_instance.vcpbench-loadbalancer.public_ip}"
+            user = "${lookup(var.user_name, "loadbalancer")}"
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",

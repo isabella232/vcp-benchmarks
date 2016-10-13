@@ -5,22 +5,19 @@
 #      yum: name="{{ item }}" state="installed"
 #      with_items:
 #        - "epel-release"
-    - name: "Install common tools"
-      yum: name="{{ item }}" state="installed"
-      with_items:
+#   - name: "Install common tools"
+#     yum: name="{{ item }}" state="installed"
+#     with_items:
 #        - "git"
-        - "ansible"
+#       - "ansible"
 #        - "wget"
 #        - "vim"
     - name: "Enable tcp_tw_reuse for testing purposes"
       command: sysctl net.ipv4.tcp_tw_reuse=1
-- name: "Consumer tuning"
-  hosts: all
-  tasks:
     - name: "Increase open files max"
       command: sysctl fs.file-max=3000000
 - name: "Setup wrk benchmarks"
-  hosts: vcpbench-consumer
+  hosts: vcpbench-consumer*
   tasks:
     - name: "Copy wrk"
       copy: src="files/wrk" dest="/usr/local/bin/wrk" mode=ugo+rwx owner=root group=root
@@ -29,14 +26,29 @@
     - name: "Copy wrk url list"
       copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root
 - name: "Setup vegeta benchmarks"
-  hosts: vcpbench-consumer
+  hosts: vcpbench-consumer*
   tasks:
     - name: "Copy vegeta"
       copy: src="files/vegeta" dest="/usr/local/bin/vegeta" mode=ugo+rwx owner=root group=root
     - name: "Copy vegeta target list"
       copy: src="files/targets.txt" dest="/tmp/targets.txt" mode=ugo+rwx owner=root group=root
+- name: "Setup siege benchmarks"
+  hosts: vcpbench-consumer*
+  tasks:
+    - name: "Install siege"
+      yum: name="siege" state="installed"
+    - name: "Copy siegewrap.sh"
+      copy: src="files/siegewrap.sh" dest="/usr/local/bin/siegewrap.sh" mode=ugo+rwx owner=root group=root
+    - name: "Copy siege url list"
+      copy: src="files/siegeurls.txt" dest="/tmp/siegeurls.txt" mode=ugo+rwx owner=root group=root
+    - name: "Create directories"
+      file: path={{ item }} state=directory
+      with_items:
+        - /root/.siege
+    - name: "Copy siege config"
+      copy: src="files/siege.conf" dest="/root/.siege/siege.conf" mode=ug+rwx owner=root group=root
 - name: "Setup Dummy-API"
-  hosts: vcpbench-varnish*
+  hosts: vcpbench-backend*
   tasks:
     - name: "Copy dummy-api binary"
       copy: src="files/dummy-api"
@@ -58,3 +70,37 @@
   handlers:
     - name: "Restart dummy-api"
       service: name="dummy-api" state="restarted"
+- name: "Configure Loadbalancer"
+  hosts: vcpbench-loadbalancer
+  tasks:
+    - name: "Copy loadbalancer VCL"
+      copy: src="files/loadbalancer.vcl"
+            dest="/etc/varnish/loadbalancer.vcl"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Copy loadbalancer.params -> varnish.params"
+      copy: src="files/loadbalancer.params"
+            dest="/etc/varnish/varnish.params"
+            mode=444 owner=root group=root
+      notify:
+        - "Restart varnish"
+    - name: "Ensure varnish is running"
+      service: name="varnish" state="running" enabled="yes"
+    - name: "Tune tcp_fin_timeout"
+      command: sysctl net.ipv4.tcp_fin_timeout=15
+    - name: "Tune netdev_max_backlog"
+      command: sysctl net.core.netdev_max_backlog=65535
+    - name: "Tune tcp_max_syn_backlog"
+      command: sysctl net.ipv4.tcp_max_syn_backlog=16384
+    - name: "Tune somaxconn"
+      command: sysctl net.core.somaxconn=16384
+    - name: "Tune ip_local_port_range"
+      command: sysctl net.ipv4.ip_local_port_range="1024 65000"
+    - name: "Tune rmem_max"
+      command: sysctl net.core.rmem_max=3750000
+    - name: "Tune wmem_max"
+      command: sysctl net.core.wmem_max=3750000
+  handlers:
+    - name: "Restart varnish"
+      service: name="varnish" state="restarted"

@@ -158,6 +158,7 @@ resource "aws_instance" "vcpbench-varnish" {
         connection {
             host = "${self.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         inline = [
             "echo ${lookup(var.instance_names, "varnish")}${count.index} > /tmp/hostname",
@@ -165,6 +166,7 @@ resource "aws_instance" "vcpbench-varnish" {
     }
 }
 
+# private_key = "${file("${var.ssh_privatekey}")}"
 resource "null_resource" "hostsfile" {
     triggers {
         aws_instance_consumer       = "${aws_instance.vcpbench-consumer.private_ip}"
@@ -179,6 +181,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-consumer.public_ip}"
             user = "${lookup(var.user_name, "consumer")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -187,6 +190,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-consumer.public_ip}"
             user = "${lookup(var.user_name, "consumer")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -196,6 +200,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-backend.public_ip}"
             user = "${lookup(var.user_name, "backend")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -204,6 +209,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-backend.public_ip}"
             user = "${lookup(var.user_name, "backend")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -213,6 +219,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-loadbalancer.public_ip}"
             user = "${lookup(var.user_name, "loadbalancer")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -221,6 +228,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-loadbalancer.public_ip}"
             user = "${lookup(var.user_name, "loadbalancer")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -230,6 +238,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.0.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -238,6 +247,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.0.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -249,6 +259,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.1.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -257,6 +268,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.1.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -268,6 +280,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.2.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -276,6 +289,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.2.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",
@@ -287,6 +301,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.3.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         source = "hosts"
         destination = "/tmp"
@@ -295,6 +310,7 @@ resource "null_resource" "hostsfile" {
         connection {
             host = "${aws_instance.vcpbench-varnish.3.public_ip}"
             user = "${lookup(var.user_name, "varnish")}"
+            agent = true
         }
         inline = [
             "sudo sh -c 'cat /tmp/hosts/hostsheader /tmp/hosts/*.host > /etc/hosts'",

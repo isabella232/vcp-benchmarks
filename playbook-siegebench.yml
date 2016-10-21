@@ -18,24 +18,24 @@
   hosts: vcpbench-backend
   tasks:
     - name: "Reset backend requests pre-benchmark"
-      shell: curl -I http://localhost:8080/x-resetdummyapistatistics
-      register: testresult
+      uri: url=http://localhost:8080/x-resetdummyapistatistic
+      register: webpage
+    - debug: var=webpage
+#      shell: curl -I http://localhost:8080/x-resetdummyapistatistics
+#      register: testresult
 - name: "Run Reference Test"
   hosts: vcpbench-consumer*
   tasks:
+    - name: "Remove siegelogs"
+      file: path=/tmp/benchmark_test*_siege*.log state=absent
     - name: "Warm cache"
       shell: curl -I "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
       register: cachewarm
     - debug: var=cachewarm.stdout_lines
-    - name: "Wait for replication"
-      pause: seconds=2
     - name: "Run siege reference test (one hit url only for 10 seconds)"
-      shell: /bin/siege -t 10s -b -c 400 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
-      register: testresult
-    - debug: var=testresult.stderr_lines
-    - name: "Dump reference testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stderr }}" dest=./results/{{ benchmark_id }}/reference_test_siege_{{ vha_status }}.log
+      shell: /bin/siege --log=/tmp/reference_test_siege_{{ vha_status}}.log -t 10s -b -c 200 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
+    - name: "Fetch result log"
+      fetch: src=/tmp/reference_test_siege_{{ vha_status }}.log dest=./results/{{ benchmark_id }}/ flat=yes
 - name: "Get stats"
   hosts: vcpbench-backend
   tasks:
@@ -49,12 +49,9 @@
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run siege varnish cache plus test"
-      shell: /bin/siege -c 200 -r once -b -f /tmp/siegeurls.txt
-      register: testresult
-    - debug: var=testresult.stderr_lines
-    - name: "Dump reference testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stderr }}" dest=./results/{{ benchmark_id }}/benchmark_test1_siege_{{ vha_status }}.log
+      shell: /bin/siege --log=/tmp/benchmark_test1_siege_{{ vha_status }}.log -c 200 -r once -b -f /tmp/siegeurls.txt
+    - name: "Fetch result log"
+      fetch: src=/tmp/benchmark_test1_siege_{{ vha_status }}.log dest=./results/{{ benchmark_id }}/ flat=yes
 - name: "Get backend reqs Pass 1"
   hosts: vcpbench-backend
   tasks:
@@ -83,12 +80,9 @@
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run siege varnish cache plus test"
-      shell: /bin/siege -c 200 -r once -b -f /tmp/siegeurls.txt
-      register: testresult
-    - debug: var=testresult.stderr_lines
-    - name: "Dump reference testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stderr }}" dest=./results/{{ benchmark_id }}/benchmark_test2_siege_{{ vha_status }}.log
+      shell: /bin/siege --log=/tmp/benchmark_test2_siege_{{ vha_status }}.log -c 200 -r once -b -f /tmp/siegeurls.txt
+    - name: "Fetch result log"
+      fetch: src=/tmp/benchmark_test2_siege_{{ vha_status }}.log dest=./results/{{ benchmark_id }}/ flat=yes
 - name: "Get backend reqs Pass 2"
   hosts: vcpbench-backend
   tasks:
@@ -115,12 +109,9 @@
   hosts: vcpbench-consumer*
   tasks:
     - name: "Run siege varnish cache plus test"
-      shell: /bin/siege -c 200 -r once -b -f /tmp/siegeurls.txt
-      register: testresult
-    - debug: var=testresult.stderr_lines
-    - name: "Dump reference testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stderr }}" dest=./results/{{ benchmark_id }}/benchmark_test3_siege_{{ vha_status }}.log
+      shell: /bin/siege --log=/tmp/benchmark_test3_siege_{{ vha_status }}.log -c 200 -r once -b -f /tmp/siegeurls.txt
+    - name: "Fetch result log"
+      fetch: src=/tmp/benchmark_test3_siege_{{ vha_status }}.log dest=./results/{{ benchmark_id }}/ flat=yes
 - name: "Get backend reqs Pass 3"
   hosts: vcpbench-backend
   tasks:

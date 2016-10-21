@@ -71,7 +71,7 @@ func populateSiegeSheet(ws *spreadsheet.Worksheet) {
 	ws.Rows[6][0].Update("Data transferred")
 	ws.Rows[7][0].Update("Response time")
 	ws.Rows[8][0].Update("Transaction rate")
-	ws.Rows[4][0].Update("Throughput")
+	ws.Rows[9][0].Update("Throughput")
 	ws.Rows[10][0].Update("Concurrency")
 	ws.Rows[11][0].Update("Successful transactions")
 	ws.Rows[12][0].Update("Failed transactions")
@@ -101,13 +101,13 @@ func parseWrkBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int, b
 
 	ws.Rows[0][offset].Update(vhastatus)
 
-	wrkp_re := regexp.MustCompile(`^(.*) threads and (.*) connections`)
-	tlat_re := regexp.MustCompile(`^Latency[[:space:]]*(.*s)[[:space:]]*(.*s)[[:space:]]*(.*s)[[:space:]]*(.*%)`)
-	treq_re := regexp.MustCompile(`^Req/Sec[[:space:]]*(\S*)[[:space:]]*(\S*)[[:space:]]*(\S*)[[:space:]]*(\S*)`)
-	req_re := regexp.MustCompile(`^(.*)[[:space:]]requests in (.*s), (.*) read`)
-	err_re := regexp.MustCompile(`^Socket errors: connect (.*), read (.*), write (.*), timeout (.*)`)
-	rps_re := regexp.MustCompile(`^Requests/sec:[[:space:]]*(.*)`)
-	xfer_re := regexp.MustCompile(`^Transfer/sec:[[:space:]]*(.*)`)
+	wrkp_re := regexp.MustCompile(`^\s*(\S*) threads and (\S*) connections`)
+	tlat_re := regexp.MustCompile(`^\s*Latency\s*(\S*s)\s*(\S*s)\s*(\S*s)\s*(\S*%)`)
+	treq_re := regexp.MustCompile(`^\s*Req/Sec\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)`)
+	req_re := regexp.MustCompile(`^\s*(\S*)\srequests in (\S*s), (\S*) read`)
+	err_re := regexp.MustCompile(`^\s*Socket errors: connect (\S*), read (\S*), write (\S*), timeout (\S*)`)
+	rps_re := regexp.MustCompile(`^\s*Requests/sec:\s*(\S*)`)
+	xfer_re := regexp.MustCompile(`^\s*Transfer/sec:\s*(\S*)`)
 
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -165,7 +165,7 @@ func parseWrkBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int, b
 func parseSiegeBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int, benchrun int, vhastatus string) {
 	var line string
 
-	file, err := os.Open(filepath + "/backend_requests" + strconv.Itoa(benchrun) + "siege_total_vha" + vhastatus + ".log")
+	file, err := os.Open(filepath + "/backend_requests" + strconv.Itoa(benchrun) + "_siege_total_vha" + vhastatus + ".log")
 	if err != nil {
 		panic(err)
 	}
@@ -176,7 +176,7 @@ func parseSiegeBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int,
 	}
 	file.Close()
 
-	file, err = os.Open(filepath + "/benchmark_test" + strconv.Itoa(benchrun) + "siege_vha" + vhastatus + ".log")
+	file, err = os.Open(filepath + "/benchmark_test" + strconv.Itoa(benchrun) + "_siege_vha" + vhastatus + ".log")
 	if err != nil {
 		panic(err)
 	}
@@ -184,73 +184,21 @@ func parseSiegeBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int,
 
 	ws.Rows[0][offset].Update(vhastatus)
 
-	sopt_re := regexp.MustCompile(`^** Preparing[[:space:]](.*)[[:space:]]concurrent users for battle.`)
-	strans_re := regexp.MustCompile(`^Transactions:\s*(.*)[[:space:]]hits`)
-	savail_re := regexp.MustCompile(`^Availability:\s*(.*)[[:space:]]%`)
-	selaps_re := regexp.MustCompile(`^Elapsed time:\s*(.*)[[:space:]]secs`)
-	sxfer_re := regexp.MustCompile(`^Data transferred:\s*(.*)[[:space:]].*`)
-	sresp_re := regexp.MustCompile(`^Response time:\s*(.*)[[:space:]].*`)
-	strrat_re := regexp.MustCompile(`^Transaction rate:\s*(.*)[[:space:]]trans/`)
-	sthrpt_re := regexp.MustCompile(`^Throughput:\s*(.*)[[:space:]].*/.*`)
-	sconc_re := regexp.MustCompile(`^Concurrency:\s*(.*)`)
-	ssucc_re := regexp.MustCompile(`^Successful transactions:\s*(.*)`)
-	sfail_re := regexp.MustCompile(`^Failed transactions:\s*(.*)`)
-	slong_re := regexp.MustCompile(`^Longest transaction:\s*(.*)`)
-	sshort_re := regexp.MustCompile(`^Shortest transaction:\s*(.*)`)
+	siegelog_re := regexp.MustCompile(`^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2},\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*),\s*(\S*)`)
 
 	for scanner.Scan() {
 		line = scanner.Text()
-		if sopt_re.MatchString(line) {
-			match := sopt_re.FindStringSubmatch(line)
-			ws.Rows[2][offset].Update(match[1])
-		}
-		if strans_re.MatchString(line) {
-			match := strans_re.FindStringSubmatch(line)
+		if siegelog_re.MatchString(line) {
+			match := siegelog_re.FindStringSubmatch(line)
 			ws.Rows[3][offset].Update(match[1])
-		}
-		if savail_re.MatchString(line) {
-			match := savail_re.FindStringSubmatch(line)
-			ws.Rows[4][offset].Update(match[1])
-		}
-		if selaps_re.MatchString(line) {
-			match := selaps_re.FindStringSubmatch(line)
-			ws.Rows[5][offset].Update(match[1])
-		}
-		if sxfer_re.MatchString(line) {
-			match := sxfer_re.FindStringSubmatch(line)
-			ws.Rows[6][offset].Update(match[1])
-		}
-		if sresp_re.MatchString(line) {
-			match := sresp_re.FindStringSubmatch(line)
-			ws.Rows[7][offset].Update(match[1])
-		}
-		if strrat_re.MatchString(line) {
-			match := strrat_re.FindStringSubmatch(line)
-			ws.Rows[8][offset].Update(match[1])
-		}
-		if sthrpt_re.MatchString(line) {
-			match := sthrpt_re.FindStringSubmatch(line)
-			ws.Rows[9][offset].Update(match[1])
-		}
-		if sconc_re.MatchString(line) {
-			match := sconc_re.FindStringSubmatch(line)
-			ws.Rows[10][offset].Update(match[1])
-		}
-		if ssucc_re.MatchString(line) {
-			match := ssucc_re.FindStringSubmatch(line)
-			ws.Rows[11][offset].Update(match[1])
-		}
-		if sfail_re.MatchString(line) {
-			match := sfail_re.FindStringSubmatch(line)
-			ws.Rows[12][offset].Update(match[1])
-		}
-		if slong_re.MatchString(line) {
-			match := slong_re.FindStringSubmatch(line)
-			ws.Rows[13][offset].Update(match[1])
-		}
-		if sshort_re.MatchString(line) {
-			match := sshort_re.FindStringSubmatch(line)
-			ws.Rows[14][offset].Update(match[1])
+			ws.Rows[5][offset].Update(match[2])
+			ws.Rows[6][offset].Update(match[3])
+			ws.Rows[7][offset].Update(match[4])
+			ws.Rows[8][offset].Update(match[5])
+			ws.Rows[9][offset].Update(match[6])
+			ws.Rows[10][offset].Update(match[7])
+			ws.Rows[11][offset].Update(match[8])
+			ws.Rows[12][offset].Update(match[9])
 		}
 	}
 

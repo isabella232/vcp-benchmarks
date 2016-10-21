@@ -45,8 +45,8 @@ func main() {
 
 	flag.Parse()
 
-	hiturl := fmt.Sprintf("/hit/?content-length&max-age=%d&header-delay=%dpredictable-content=", hitage, hitdelay)
-	missurl := fmt.Sprintf("/miss/?content-length&max-age=%d&header-delay=%dpredictable-content=", missage, missdelay)
+	hiturl := fmt.Sprintf("/hit/?content-length&max-age=%d&header-delay=%d&predictable-content=", hitage, hitdelay)
+	missurl := fmt.Sprintf("/miss/?content-length&max-age=%d&header-delay=%d&predictable-content=", missage, missdelay)
 
 	urls := make([]string, numurls)
 	size := int64(minsize * factor)

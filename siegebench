@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Generate Benchmark timestamp ID"
-BenchmarkID=$(date "+%Y-%m-%d-%H.%M.%S")
+BenchmarkID=$(date "+%Y-%m-%d-%H.%M")
 echo "Enable VHA."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-enablevha.yml 
 echo "Running VHA enabled benchmark."

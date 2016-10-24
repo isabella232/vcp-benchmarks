@@ -104,7 +104,7 @@ func parseWrkBenchmark(ws *spreadsheet.Worksheet, filepath string, offset int, b
 	wrkp_re := regexp.MustCompile(`^\s*(\S*) threads and (\S*) connections`)
 	tlat_re := regexp.MustCompile(`^\s*Latency\s*(\S*s)\s*(\S*s)\s*(\S*s)\s*(\S*%)`)
 	treq_re := regexp.MustCompile(`^\s*Req/Sec\s*(\S*)\s*(\S*)\s*(\S*)\s*(\S*)`)
-	req_re := regexp.MustCompile(`^\s*(\S*)\srequests in (\S*s), (\S*) read`)
+	req_re := regexp.MustCompile(`^\s*(\S*)\srequests in (\S*[s,m,h]), (\S*) read`)
 	err_re := regexp.MustCompile(`^\s*Socket errors: connect (\S*), read (\S*), write (\S*), timeout (\S*)`)
 	rps_re := regexp.MustCompile(`^\s*Requests/sec:\s*(\S*)`)
 	xfer_re := regexp.MustCompile(`^\s*Transfer/sec:\s*(\S*)`)

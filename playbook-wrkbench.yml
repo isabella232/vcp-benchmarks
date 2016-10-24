@@ -31,7 +31,7 @@
     - name: "Wait for replication"
       pause: seconds=2
     - name: "Run wrk reference test (one hit url only for 10 seconds)"
-      shell: /usr/local/bin/wrk -t 1 -d 10 -c 400 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
+      shell: /usr/local/bin/wrk -t 1 -d 10 -c 300 "http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000"
       register: testresult
     - debug: var=testresult.stdout_lines
     - name: "Dump reference testresult to local file"
@@ -46,104 +46,48 @@
     - debug: var=backendreqs.x_request_counter
     - name: "Reset backend requests post-reference"
       uri: url='http://localhost:8080/x-resetdummyapistatistics'
+
 - name: "Run Benchmark Pass 1"
   hosts: vcpbench-consumer*
   tasks:
-    - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
-      register: testresult
-    - debug: var=testresult.stdout_lines
-    - name: "Dump reference testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test1_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-benchmark.yml pass=1 threads=1 duration=90 concurrency=200 
 - name: "Get backend reqs Pass 1"
   hosts: vcpbench-backend
   tasks:
-    - name: "Get backend requests post-benchmark"
-      uri: url='http://localhost:8080/x-dumpdummyapistatistics'
-      register: backendreqs
-    - debug: var=backendreqs.x_request_counter
-    - name: "Dump backend requests to local file"
-      become: false
-      local_action: copy content="{{ backendreqs.x_request_counter }}" dest=./results/{{ benchmark_id }}/backend_requests1_{{ inventory_hostname }}_{{ vha_status }}.log
-    - name: "Reset dummy-api stats"
-      uri: url='http://localhost:8080/x-resetdummyapistatistics'
-- name: "Post process benchmark output Pass 1"
+    - include: playbook-includes/wrkbench-collect.yml pass=1
+- name: "Post process output Pass 1"
   connection: local
   hosts: 127.0.0.1
   become: false
   tasks:
-    - name: "Summarize backend requests Pass 1"
-      become: false
-      local_action: shell paste -d + ./results/{{ benchmark_id }}/backend_requests1_*_{{ vha_status }}.log | /usr/bin/bc
-      register: totalbackendreqs
-    - debug: var=totalbackendreqs.stdout
-    - name: "Write total to file"
-      become: false
-      local_action: copy content="{{ totalbackendreqs.stdout }}" dest=./results/{{ benchmark_id }}/backend_requests1_total_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-process.yml pass=1
+
 - name: "Run Benchmark Pass 2"
   hosts: vcpbench-consumer*
   tasks:
-    - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
-      register: testresult
-    - debug: var=testresult.stdout_lines
-    - name: "Dump testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test2_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-benchmark.yml pass=2 threads=1 duration=90 concurrency=200 
 - name: "Get backend reqs Pass 2"
   hosts: vcpbench-backend
   tasks:
-    - name: "Get backend requests post-benchmark"
-      uri: url='http://localhost:8080/x-dumpdummyapistatistics'
-      register: backendreqs
-    - debug: var=backendreqs.x_request_counter
-    - name: "Dump backend requests to local file"
-      become: false
-      local_action: copy content="{{ backendreqs.x_request_counter }}" dest=./results/{{ benchmark_id }}/backend_requests2_{{ inventory_hostname }}_{{ vha_status }}.log
-- name: "Post process benchmark output Pass 2"
+    - include: playbook-includes/wrkbench-collect.yml pass=2
+- name: "Post process output Pass 2"
   connection: local
   hosts: 127.0.0.1
   become: false
   tasks:
-    - name: "Summarize backend requests Pass 2"
-      become: false
-      local_action: shell paste -d + ./results/{{ benchmark_id }}/backend_requests2_*_{{ vha_status }}.log | /usr/bin/bc
-      register: totalbackendreqs
-    - debug: var=totalbackendreqs.stdout
-    - name: "Write total to file"
-      become: false
-      local_action: copy content="{{ totalbackendreqs.stdout }}" dest=./results/{{ benchmark_id }}/backend_requests2_total_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-process.yml pass=2
+
 - name: "Run Benchmark Pass 3"
   hosts: vcpbench-consumer*
   tasks:
-    - name: "Run wrk varnish cache plus test"
-      shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t 1 -d 10 -c 400 "http://loadbalancer/"
-      register: testresult
-    - debug: var=testresult.stdout_lines
-    - name: "Dump testresult to local file"
-      become: false
-      local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test3_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-benchmark.yml pass=3 threads=1 duration=90 concurrency=200 
 - name: "Get backend reqs Pass 3"
   hosts: vcpbench-backend
   tasks:
-    - name: "Get backend requests post-benchmark"
-      uri: url='http://localhost:8080/x-dumpdummyapistatistics'
-      register: backendreqs
-    - debug: var=backendreqs.x_request_counter
-    - name: "Dump backend requests to local file"
-      become: false
-      local_action: copy content="{{ backendreqs.x_request_counter }}" dest=./results/{{ benchmark_id }}/backend_requests3_{{ inventory_hostname }}_{{ vha_status }}.log
-- name: "Post process benchmark output Pass 3"
+    - include: playbook-includes/wrkbench-collect.yml pass=3
+- name: "Post process output Pass 3"
   connection: local
   hosts: 127.0.0.1
   become: false
   tasks:
-    - name: "Summarize backend requests Pass 3"
-      become: false
-      local_action: shell paste -d + ./results/{{ benchmark_id }}/backend_requests3_*_{{ vha_status }}.log | /usr/bin/bc
-      register: totalbackendreqs
-    - debug: var=totalbackendreqs.stdout
-    - name: "Write total to file"
-      become: false
-      local_action: copy content="{{ totalbackendreqs.stdout }}" dest=./results/{{ benchmark_id }}/backend_requests3_total_{{ vha_status }}.log
+    - include: playbook-includes/wrkbench-process.yml pass=3

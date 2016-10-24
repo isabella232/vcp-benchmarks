@@ -1,0 +1,7 @@
+- name: "Run wrk benchmark"
+  shell: /usr/local/bin/wrk -s /tmp/multipath.lua -t {{ threads }} -d {{ duration }} -c {{ concurrency }} --timeout 9s "http://loadbalancer/"
+  register: testresult
+- debug: var=testresult.stdout_lines
+- name: "Dump benchmark result to local file"
+  become: false
+  local_action: copy content="{{ testresult.stdout }}" dest=./results/{{ benchmark_id }}/benchmark_test{{ pass }}_{{ vha_status }}.log

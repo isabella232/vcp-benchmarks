@@ -1,0 +1,9 @@
+- name: "Get backend requests post-benchmark {{ pass }}"
+  uri: url='http://localhost:8080/x-dumpdummyapistatistics'
+  register: backendreqs
+- debug: var=backendreqs.x_request_counter
+- name: "Dump backend requests to local file"
+  become: false
+  local_action: copy content="{{ backendreqs.x_request_counter }}" dest=./results/{{ benchmark_id }}/backend_requests{{ pass }}_{{ inventory_hostname }}_{{ vha_status }}.log
+- name: "Reset dummy-api stats"
+  uri: url='http://localhost:8080/x-resetdummyapistatistics'

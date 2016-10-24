@@ -1,0 +1,8 @@
+- name: "Summarize backend requests"
+  become: false
+  local_action: shell paste -d + ./results/{{ benchmark_id }}/backend_requests{{ pass }}_*_{{ vha_status }}.log | /usr/bin/bc
+  register: totalbackendreqs
+- debug: var=totalbackendreqs.stdout
+- name: "Write total to file"
+  become: false
+  local_action: copy content="{{ totalbackendreqs.stdout }}" dest=./results/{{ benchmark_id }}/backend_requests{{ pass }}_total_{{ vha_status }}.log

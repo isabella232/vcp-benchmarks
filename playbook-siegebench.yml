@@ -26,6 +26,8 @@
 - name: "Run Reference Test"
   hosts: vcpbench-consumer*
   tasks:
+    - name: "Copy siege url list"
+      copy: src="files/siegeurls.txt" dest="/tmp/siegeurls.txt" mode=ugo+rwx owner=root group=root
     - name: "Remove siegelogs"
       file: path=/tmp/benchmark_test*_siege*.log state=absent
     - name: "Warm cache"

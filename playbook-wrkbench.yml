@@ -24,6 +24,8 @@
 - name: "Run Reference Test"
   hosts: vcpbench-consumer*
   tasks:
+    - name: "Copy wrk url list"
+      copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root
     - name: "Warm cache"
       uri: url='http://loadbalancer/reference/?content-length&max-age=6000&header-delay=100predictable-content=200000'
       register: cachewarm

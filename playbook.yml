@@ -23,8 +23,6 @@
       copy: src="files/wrk" dest="/usr/local/bin/wrk" mode=ugo+rwx owner=root group=root
     - name: "Copy wrk multipath lua script"
       copy: src="files/multipath.lua" dest="/tmp/multipath.lua" mode=ugo+rwx owner=root group=root
-    - name: "Copy wrk url list"
-      copy: src="files/urls.txt" dest="/tmp/urls.txt" mode=ugo+rwx owner=root group=root
 - name: "Setup vegeta benchmarks"
   hosts: vcpbench-consumer*
   tasks:
@@ -39,8 +37,6 @@
       yum: name="siege" state="installed"
     - name: "Copy siegewrap.sh"
       copy: src="files/siegewrap.sh" dest="/usr/local/bin/siegewrap.sh" mode=ugo+rwx owner=root group=root
-    - name: "Copy siege url list"
-      copy: src="files/siegeurls.txt" dest="/tmp/siegeurls.txt" mode=ugo+rwx owner=root group=root
     - name: "Create directories"
       file: path={{ item }} state=directory
       with_items:

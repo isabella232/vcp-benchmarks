@@ -1,6 +1,15 @@
 #!/bin/bash
 
-terraform destroy -var-file="terraform.tfvars.mine" "aws-ec2/"
+if [ "$1" == "-force" ]; then
+    echo "Will destroy environment in 20 seconds. Break to abort."    
+    sleep 20 && terraform destroy -force -var-file="terraform.tfvars.mine" "aws-ec2/"
+else
+    terraform destroy -var-file="terraform.tfvars.mine" "aws-ec2/"
+fi
+
+echo "Cleaning out local files in 20 seconds. Break to abort."
+sleep 20  
+
 rm -f hosts/*.host
 rm -f hosts/*.cname
 rm -f hosts/*.vhahost

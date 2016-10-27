@@ -1,7 +1,18 @@
 #!/bin/bash
 
+Delay=200
+MinSize=10000
+MaxSize=50000
+NumUrls=50000
+#SheetID=1fiFTGjRfJSlLCDVybqi2xgDsbfrFhOvLqjNBJ33LdwA
+SheetID=1v91ITpUMOzp76uNIOoi3YMiZs2_GcLDOtpUMl14N8Pc
+
 echo "Generate Benchmark timestamp ID"
 BenchmarkID=$(date "+%Y-%m-%d-%H.%M")
+echo "Generate URL list"
+./urlgenerator -min-size=${MinSize} -max-size=${MaxSize} -hit-age=6000 -urls=${NumUrls} -hit-percent=100 -hit-delay=${Delay} > files/urls.txt
+mkdir -p results/${BenchmarkID}
+echo "Delay:${Delay}ms,BodySizeMin:${MinSize}bytes,BodySizeMax:${MaxSize}bytes" > results/${BenchmarkID}/url_file_parameters.log
 echo "Enable VHA."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-enablevha.yml 
 echo "Running VHA enabled benchmark."
@@ -10,7 +21,7 @@ echo "Disable VHA."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-disablevha.yml
 echo "Running VHA disabled benchmark."
 ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i /usr/local/bin/terraform-inventory playbook-wrkbench.yml --extra-vars "benchmark_id=${BenchmarkID} vha_status=vhadisabled"
-./storeindocs -sheet-id 1fiFTGjRfJSlLCDVybqi2xgDsbfrFhOvLqjNBJ33LdwA -benchmark-dir results/${BenchmarkID}
+./storeindocs -sheet-id ${SheetID} -benchmark-dir results/${BenchmarkID}
 
 if [ -x /usr/local/bin/terminal-notifier ] ; then
     /usr/local/bin/terminal-notifier -message 'Benchmark done' -sound 'default'
